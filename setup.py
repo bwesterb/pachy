@@ -1,5 +1,5 @@
-# vim: et:sta:bs=2:sw=4:
 #!/usr/bin/env python
+# vim: et:sta:bs=2:sw=4:
 
 from setuptools import setup
 from get_git_version import get_git_version
