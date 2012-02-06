@@ -33,6 +33,9 @@ class Pachy(object):
         parser.add_argument('--rsync', default='rsync -v', metavar='CMD',
                 help='The rsync command to use. '+
                      'eg: `rsync -e "ssh -p 123"\'')
+        parser.add_argument('--steps', default='01234',
+                help='Specifies which steps to perform. Default is `01234\'. '+
+                        'Only use for debugging.')
         self.args = parser.parse_args()
         # Ensure source has a trailing /
         self.source_arg = self.args.source
@@ -49,16 +52,21 @@ class Pachy(object):
 
     def main(self):
         self.parse_cmdLine_args()
-        logging.info("0. Checking set-up")
-        self.check_setup()
-        logging.info("1. Running rsync")
-        self.run_rsync()
-        logging.info("2. Checking for changes")
-        self.find_changed()
-        logging.info("3. Creating archive")
-        self.create_archive()
-        logging.info("4. Cleaning up")
-        self.cleanup()
+        if '0' in self.args.steps:
+            logging.info("0. Checking set-up")
+            self.check_setup()
+        if '1' in self.args.steps:
+            logging.info("1. Running rsync")
+            self.run_rsync()
+        if '2' in self.args.steps:
+            logging.info("2. Checking for changes")
+            self.find_changed()
+        if '3' in self.args.steps:
+            logging.info("3. Creating archive")
+            self.create_archive()
+        if '4' in self.args.steps:
+            logging.info("4. Cleaning up")
+            self.cleanup()
 
     def check_setup(self):
         # Does the destination directory exist?
