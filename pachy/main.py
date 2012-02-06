@@ -136,6 +136,10 @@ class Pachy(object):
             sys.exit(4)
 
     def create_archive(self):
+        if (not os.listdir(os.path.join(self.work_dir, 'changed')) and
+                not os.listdir(os.path.join(self.work_dir, 'deleted'))):
+            logging.info("No changes.  Will not create archive.")
+            return
         archive_path = os.path.join(self.deltas_dir,
                     datetime.datetime.now().strftime('%Y-%m-%d@%Hh%M.%S.tar'))
         ret = subprocess.call(
