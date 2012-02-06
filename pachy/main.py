@@ -7,6 +7,7 @@
 # Licensed under the GPLv3
 
 import sys
+import shlex
 import logging
 import os.path
 import argparse
@@ -21,6 +22,17 @@ class Pachy(object):
                                 help='source directory')
         parser.add_argument('dest', metavar='DEST',
                                 help='destination directory')
+
+        parser.add_argument('--tar', default='tar', metavar='CMD',
+                help='The tar compatible archiver to use.')
+        parser.add_argument('--compressor', default='xz -9', metavar='CMD',
+                help='The xz compatible compressor to use. '+
+                     'eg: `gz -5\'')
+        parser.add_argument('--differ', default='xdelta3', metavar='CMD',
+                help='The xdelta3 compatible differ to use')
+        parser.add_argument('--rsync', default='rsync -v', metavar='CMD',
+                help='The rsync command to use. '+
+                     'eg: `rsync -e "ssh -p 123"\'')
         self.args = parser.parse_args()
         # Ensure source has a trailing /
         self.source_arg = self.args.source
@@ -68,15 +80,15 @@ class Pachy(object):
         os.mkdir(os.path.join(self.work_dir, 'deleted'))
         
     def run_rsync(self):
-        ret = subprocess.call([
-                'rsync', '--archive', # we want to preserve metadata
+        ret = subprocess.call(
+                shlex.split(self.args.rsync) +
+                        ['--archive', # we want to preserve metadata
                          '--backup',  # do not override files
                          '--delete',  # delete extraneous files
                          self.source_arg,
                          self.mirror_dir,
                          '--backup-dir='+self.pile_dir,
-                         '--filter=dir-merge /.pachy-filter',
-                         '--verbose'])
+                         '--filter=dir-merge /.pachy-filter'])
         if ret != 0:
             logging.error('rsync failed with error code %s', ret)
             sys.exit(3)
@@ -114,9 +126,9 @@ class Pachy(object):
         f_pile = os.path.join(self.pile_dir, f)
         f_mirror = os.path.join(self.mirror_dir, f)
         f_changed = os.path.join(self.work_dir, 'changed', f) + '.xdelta3'
-        ret = subprocess.call([
-                    'xdelta3',
-                    '-s', f_pile, # source
+        ret = subprocess.call(
+                   shlex.split(self.args.differ) +
+                   ['-s', f_pile, # source
                     f_mirror,     # target
                     f_changed])   # out
         if ret != 0:
@@ -126,9 +138,9 @@ class Pachy(object):
     def create_archive(self):
         archive_path = os.path.join(self.deltas_dir,
                     datetime.datetime.now().strftime('%Y-%m-%d@%Hh%M.%S.tar'))
-        ret = subprocess.call([
-                    'tar',
-                    '-cf',        # create a file
+        ret = subprocess.call(
+                   shlex.split(self.args.tar) +
+                   ['-cf',        # create a file
                     archive_path,
                     'changed',
                     'deleted'],
@@ -136,10 +148,9 @@ class Pachy(object):
         if ret != 0:
             logging.error('tar failed with errorcode %s', ret)
             sys.exit(5)
-        ret = subprocess.call([
-                    'xz',
-                    '-9',
-                    archive_path])
+        ret = subprocess.call(
+                   shlex.split(self.args.compressor) +
+                   [archive_path])
         if ret != 0:
             logging.error('xz failed with errorcode %s', ret)
             sys.exit(6)
