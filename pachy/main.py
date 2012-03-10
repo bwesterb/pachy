@@ -115,7 +115,7 @@ class Pachy(object):
                     continue
                 c_mirror = os.path.join(d_mirror, c)
                 # c is a file in the work directory.
-                if not os.path.exists(c_mirror):
+                if not os.path.isfile(c_mirror):
                     # it was apparently deleted. Move to deleted.
                     d_deleted = os.path.join(self.work_dir, 'deleted', d)
                     # TODO cache this to limit syscalls
