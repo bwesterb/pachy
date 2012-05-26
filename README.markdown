@@ -117,7 +117,7 @@ and add the following line
 
 This will create a full backup of **all** files.  If you want to exclude
 some files, you can create a `.pachy-filter` file in the root of the
-server with:
+server with, for instance:
 
     - /proc
     - /dev
