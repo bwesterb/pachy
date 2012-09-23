@@ -114,8 +114,15 @@ class Pachy(object):
                     stack.append(os.path.join(d, c))
                     continue
                 c_mirror = os.path.join(d_mirror, c)
-                # c is a file in the work directory.
-                if not os.path.isfile(c_mirror):
+                # If c is not in the mirror directory, it was deleted.
+                # If c *is* in the mirror directory, but changed type,
+                # (eg. from symlink to file, file to directory, ...)
+                # we will handle it as if it was deleted.
+                # Also if c is a symlink that changed, it is convenient
+                # to handle it as a deleted file.
+                if (not os.path.isfile(c_mirror) or
+                        os.path.islink(c_mirror) or
+                        os.path.islink(c_pile)):
                     # it was apparently deleted. Move to deleted.
                     d_deleted = os.path.join(self.work_dir, 'deleted', d)
                     # TODO cache this to limit syscalls
@@ -123,7 +130,7 @@ class Pachy(object):
                         os.makedirs(d_deleted)
                     os.rename(c_pile, os.path.join(d_deleted, c))
                     continue
-                # c was changed.  Create a xdelta
+                # c was changed.  We create a xdelta.
                 d_changed = os.path.join(self.work_dir, 'changed', d)
                 # TODO cache this to limit syscalls
                 if not os.path.exists(d_changed):
