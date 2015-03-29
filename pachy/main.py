@@ -23,6 +23,8 @@ class Pachy(object):
         parser.add_argument('dest', metavar='DEST',
                                 help='destination directory')
 
+        parser.add_argument('--name', '-N', default=None, metavar='NAME',
+                help='Name of the archive.  Default like 2015-03-29@15h29.10')
         parser.add_argument('--tar', default='tar', metavar='CMD',
                 help='The tar compatible archiver to use.')
         parser.add_argument('--compressor', default='xz -9', metavar='CMD',
@@ -170,8 +172,10 @@ class Pachy(object):
                 not os.listdir(os.path.join(self.work_dir, 'deleted'))):
             logging.info("No changes.  Will not create archive.")
             return
-        archive_path = os.path.join(self.deltas_dir,
-                    datetime.datetime.now().strftime('%Y-%m-%d@%Hh%M.%S.tar'))
+        name = self.args.name
+        if name is None:
+            name = datetime.datetime.now().strftime('%Y-%m-%d@%Hh%M.%S')
+        archive_path = os.path.join(self.deltas_dir, name + '.tar')
         ret = subprocess.call(
                    shlex.split(self.args.tar) +
                    ['-cf',        # create a file
