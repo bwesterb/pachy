@@ -149,6 +149,9 @@ class Pachy(object):
         if ret != 0:
             logging.error('xdelta3 failed with errorcode %s', ret)
             sys.exit(4)
+        # Remove f_pile such that on a retry the differ won't complain
+        # overwriting f_changed.
+        os.unlink(f_pile)
 
     def create_archive(self):
         if (not os.listdir(os.path.join(self.work_dir, 'changed')) and
