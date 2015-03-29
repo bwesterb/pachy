@@ -122,7 +122,7 @@ class Pachy(object):
             d_mirror = os.path.join(self.mirror_dir, d)
             for c in os.listdir(d_pile):
                 c_pile = os.path.join(d_pile, c)
-                if os.path.isdir(c_pile):
+                if os.path.isdir(c_pile) and not os.path.islink(c_pile):
                     stack.append(os.path.join(d, c))
                     continue
                 c_mirror = os.path.join(d_mirror, c)
