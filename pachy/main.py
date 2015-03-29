@@ -36,6 +36,8 @@ class Pachy(object):
         parser.add_argument('--steps', default='01234',
                 help='Specifies which steps to perform. Default is `01234\'. '+
                         'Only use for debugging.')
+        parser.add_argument('--verbose', '-v', action='count', dest='verbosity',
+                help='Add these to make pachy chatty')
         self.args = parser.parse_args()
         # Ensure source has a trailing /
         self.source_arg = self.args.source
@@ -50,8 +52,15 @@ class Pachy(object):
                                 self.args.dest, 'work'))
         self.pile_dir = os.path.join(self.work_dir, 'pile')
 
+    def setup_logging(self):
+        level = logging.INFO
+        if self.args.verbosity >= 1:
+            level = logging.DEBUG
+        logging.basicConfig(level=level)
+
     def main(self):
         self.parse_cmdLine_args()
+        self.setup_logging()
         if '0' in self.args.steps:
             logging.info("0. Checking set-up")
             self.check_setup()
@@ -106,6 +115,7 @@ class Pachy(object):
         stack = ['.']
         while stack:
             d = stack.pop()
+            logging.debug(d)
             d_pile = os.path.join(self.pile_dir, d)
             d_mirror = os.path.join(self.mirror_dir, d)
             for c in os.listdir(d_pile):
@@ -123,6 +133,7 @@ class Pachy(object):
                 if (not os.path.isfile(c_mirror) or
                         os.path.islink(c_mirror) or
                         os.path.islink(c_pile)):
+                    logging.debug('%s: deleted', os.path.join(d, c))
                     # it was apparently deleted. Move to deleted.
                     d_deleted = os.path.join(self.work_dir, 'deleted', d)
                     # TODO cache this to limit syscalls
@@ -138,6 +149,7 @@ class Pachy(object):
                 self.create_delta(os.path.join(d, c))
 
     def create_delta(self, f):
+        logging.debug('%s: changed', f)
         f_pile = os.path.join(self.pile_dir, f)
         f_mirror = os.path.join(self.mirror_dir, f)
         f_changed = os.path.join(self.work_dir, 'changed', f) + '.xdelta3'
@@ -186,7 +198,6 @@ class Pachy(object):
             sys.exit(7)
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
     Pachy().main()
 
 if __name__ == '__main__':
