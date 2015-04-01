@@ -107,7 +107,7 @@ class Pachy(object):
                          self.source_arg,
                          self.mirror_dir,
                          '--backup-dir='+self.pile_dir,
-                         '--filter=dir-merge /.pachy-filter'])
+                         '--filter=dir-merge .pachy-filter'])
         if ret != 0:
             logging.error('rsync failed with error code %s', ret)
             sys.exit(3)
