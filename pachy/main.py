@@ -151,10 +151,21 @@ class Pachy(object):
                 self.create_delta(os.path.join(d, c))
 
     def create_delta(self, f):
-        logging.debug('%s: changed', f)
         f_pile = os.path.join(self.pile_dir, f)
         f_mirror = os.path.join(self.mirror_dir, f)
         f_changed = os.path.join(self.work_dir, 'changed', f) + '.xdelta3'
+        # Check whether the files actually differ
+        # TODO can't xdelta3 check this?
+        if os.path.getsize(f_pile) == os.path.getsize(f_mirror):
+            logging.debug('%s: changed?', f)
+            ret = subprocess.call(['cmp', '-s', f_pile, f_mirror])
+            if ret == 0:
+                logging.debug('%s: wasn\'t changed', f)
+                # The files do not differ.  (rsync made a copy because metadata
+                # differed.)
+                os.unlink(f_pile)
+                return
+        logging.debug('%s: changed', f)
         ret = subprocess.call(
                    shlex.split(self.args.differ) +
                    ['-s', f_pile, # source
