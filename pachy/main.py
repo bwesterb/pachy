@@ -99,18 +99,27 @@ class Pachy(object):
         os.mkdir(os.path.join(self.work_dir, 'deleted'))
         
     def run_rsync(self):
-        ret = subprocess.call(
-                shlex.split(self.args.rsync) +
-                        ['--archive', # we want to preserve metadata
-                         '--backup',  # do not override files
-                         '--delete',  # delete extraneous files
-                         self.source_arg,
-                         self.mirror_dir,
-                         '--backup-dir='+self.pile_dir,
-                         '--filter=dir-merge .pachy-filter'])
-        if ret != 0:
-            logging.error('rsync failed with error code %s', ret)
-            sys.exit(3)
+        n_tries = 0
+        while n_tries < 3:
+            n_tries += 1
+            ret = subprocess.call(
+                    shlex.split(self.args.rsync) +
+                            ['--archive', # we want to preserve metadata
+                             '--backup',  # do not override files
+                             '--delete',  # delete extraneous files
+                             self.source_arg,
+                             self.mirror_dir,
+                             '--backup-dir='+self.pile_dir,
+                             '--filter=dir-merge .pachy-filter'])
+            if ret == 0:
+                return
+            elif ret == 24:
+                # This is the rsync warning "some files vanished before
+                # they could be transferred".  We'll ignore this.
+                continue
+            else ret != 0:
+                logging.error('rsync failed with error code %s', ret)
+                sys.exit(3)
 
     def find_changed(self):
         # walk the work directory
